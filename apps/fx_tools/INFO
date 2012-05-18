@@ -1,0 +1,7 @@
+Name: fx_tools
+Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
+Maintainer: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
+License: GPL v3
+Copyright: 2008-2012, FU Berlin
+Status: under development
+Description: Tools for processing FASTA and FASTQ files.
