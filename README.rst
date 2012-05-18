@@ -4,7 +4,7 @@ FX Tools
 This repository contains some tools for processing FASTA and FASTQ files.  They
 are implemented using the SeqAn library.
 
-The current status is **experimental**.v
+The current status is **experimental**.
 
 fx_convert
 ----------
