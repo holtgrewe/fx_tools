@@ -36,6 +36,8 @@
 // This is the equivalent of the "samtools faidx" command.
 // ==========================================================================
 
+#include <sstream>
+
 #include <seqan/arg_parse.h>
 #include <seqan/basic.h>
 #include <seqan/sequence.h>
@@ -224,7 +226,6 @@ bool parseRegion(Region & region, seqan::CharString const & regionString)
         return false;
     if (region.endPos <= 0)
         return false;
-    region.endPos -= 1;  // Adjust to 0-based.
 
     return atEnd(reader);
 }
@@ -319,7 +320,7 @@ int main(int argc, char const ** argv)
     {
         Region const & region = regions[i];
         seqan::CharString id = options.regions[i];
-        seqan::Dna5String seq;
+        seqan::CharString seq;
         unsigned beginPos = 0;
         if (region.beginPos > 0)
             beginPos = region.beginPos;
