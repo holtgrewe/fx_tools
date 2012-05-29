@@ -11,3 +11,10 @@ fx_convert
 
 Conversion from FASTQ to FASTA and between different quality types of FASTQ
 files.
+
+fx_faidx
+--------
+
+Indexing of FASTA file and fast indexed access to FASTA files.
+
+This is the equivalent to ``samtools faidx``.
