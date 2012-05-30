@@ -3,3 +3,4 @@ project (sandbox_fx_tools_apps_fx_tools)
 
 seqan_add_executable(fx_convert fx_convert.cpp)
 seqan_add_executable(fx_faidx fx_faidx.cpp)
+seqan_add_executable(fx_sak fx_sak.cpp)

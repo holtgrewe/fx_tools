@@ -40,6 +40,7 @@
 
 #include <seqan/arg_parse.h>
 #include <seqan/basic.h>
+#include <seqan/modifier.h>
 #include <seqan/sequence.h>
 #include <seqan/stream.h>
 
@@ -115,8 +116,6 @@ bool parseRange(TNum & beginPos, TNum & endPos, seqan::CharString const & rangeS
         return false;
     if (!lexicalCast2(beginPos, buffer))
         return false;
-    if (beginPos <= 0)
-        return false;
     if (atEnd(reader))
         return true;
     goNext(reader);  // Skip '-'.
@@ -135,7 +134,7 @@ bool parseRange(TNum & beginPos, TNum & endPos, seqan::CharString const & rangeS
         return false;
     if (!lexicalCast2(endPos, buffer))
         return false;
-    if (endPos <= 0)
+    if (endPos < beginPos)
         return false;
     return true;
 }
@@ -303,33 +302,49 @@ int main(int argc, char const ** argv)
     }
 
     // -----------------------------------------------------------------------
-    // Open File.
+    // Open Files.
     // -----------------------------------------------------------------------
     std::ostream * outPtr = & std::cout;
     std::fstream inStream;
     if (!empty(options.inFastxPath))
     {
-        inStream.open(options.inFastxPath, std::ios::binary | std::ios::in);
+        inStream.open(toCString(options.inFastxPath), std::ios::binary | std::ios::in);
         if (!inStream.good())
         {
             std::cerr << "ERROR: Could not open input file " << options.inFastxPath << "\n";
             return 1;
         }
-        outPtr = &inStream;
+    }
+    std::fstream outStream;
+    if (!empty(options.outPath))
+    {
+        outStream.open(toCString(options.outPath), std::ios::binary | std::ios::in);
+        if (!outStream.good())
+        {
+            std::cerr << "ERROR: Could not open output file " << options.outPath << "\n";
+            return 1;
+        }
+        outPtr = &outStream;
     }
 
     // Compute index of last sequence to write if any.
-    __uint64 endIdx = maxValue<__uint64>();
-    SEQAN_FAIL("Write me!");
-
+    __uint64 endIdx = seqan::maxValue<__uint64>();
+    for (unsigned i = 0; i < length(options.seqIndices); ++i)
+        if (endIdx == seqan::maxValue<__uint64>() || endIdx > options.seqIndices[i] + 1)
+            endIdx = options.seqIndices[i] + 1;
+    for (unsigned i = 0; i < length(options.seqIndexRanges); ++i)
+        if (endIdx == seqan::maxValue<__uint64>() || endIdx > options.seqIndexRanges[i].i2)
+            endIdx = options.seqIndexRanges[i].i2;
+    if (options.verbosity >= 2)
+        std::cerr << "Sequence end idx: " << endIdx << "\n";
+    
     // -----------------------------------------------------------------------
     // Read and Write Filtered.
     // -----------------------------------------------------------------------
     startTime = sysTime();
-    seqan::RecordReader<std::fstream, seqan::SinglePass<> > reader(in);
+    seqan::RecordReader<std::fstream, seqan::SinglePass<> > reader(inStream);
     seqan::AutoSeqStreamFormat tagSelector;
-    bool b = checkStreamFormat(reader, tagSelector);
-    if (tagSelector.tagId != 1 && tagSelector.tagId != 2)
+    if (!checkStreamFormat(reader, tagSelector) || (tagSelector.tagId != 1 && tagSelector.tagId != 2))
     {
         std::cerr << "ERROR: Could not determine input format!\n";
         return 1;
@@ -365,13 +380,18 @@ int main(int argc, char const ** argv)
 
         // Check whether to write out sequence.
         bool writeOut = false;
+        if (empty(options.seqIndices) && empty(options.seqIndexRanges))
+            writeOut = true;
         // One of options.seqIndices.
-        for (unsigned i = 0; i < length(options.seqIndices); ++i)
+        if (!writeOut)
         {
-            if (options.seqIndices[i] == idx)
+            for (unsigned i = 0; i < length(options.seqIndices); ++i)
             {
-                writeOut = true;
-                break;
+                if (options.seqIndices[i] == idx)
+                {
+                    writeOut = true;
+                    break;
+                }
             }
         }
         // One of options.seqIndexRanges.
@@ -399,20 +419,65 @@ int main(int argc, char const ** argv)
         // Write out if we want this.
         if (writeOut)
         {
-            if (options.outFastq)
+            // Get begin and end index of infix to write out.
+            __uint64 infixBegin = 0;
+            if (options.seqInfixBegin != seqan::maxValue<__uint64>())
+                infixBegin = options.seqInfixBegin;
+            if (infixBegin > length(seq))
+                infixBegin = length(seq);
+            __uint64 infixEnd = length(seq);
+            if (options.seqInfixEnd < length(seq))
+                infixEnd = options.seqInfixEnd;
+            if (infixEnd < infixBegin)
+                infixEnd = infixBegin;
+            if (options.verbosity >= 3)
+                std::cerr << "INFIX\tbegin:" << infixBegin << "\tend:" << infixEnd << "\n";
+
+            if (options.reverseComplement)
             {
-                if (writeRecord(*outPtr, id, seq, quals, Fastq()) != 0)
+                seqan::Dna5String seqCopy = seq;
+                reverseComplement(seqCopy);
+                reverse(quals);
+                infixEnd = length(seq) - infixEnd;
+                infixBegin = length(seq) - infixBegin;
+                std::swap(infixEnd, infixBegin);
+
+                if (options.outFastq)
                 {
-                    std::cerr << "ERROR: Writing record!\n";
-                    return 1;
+                    if (writeRecord(*outPtr, id, infix(seqCopy, infixBegin, infixEnd),
+                                    infix(quals, infixBegin, infixEnd), seqan::Fastq()) != 0)
+                    {
+                        std::cerr << "ERROR: Writing record!\n";
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (writeRecord(*outPtr, id, infix(seqCopy, infixBegin, infixEnd), seqan::Fasta()) != 0)
+                    {
+                        std::cerr << "ERROR: Writing record!\n";
+                        return 1;
+                    }
                 }
             }
             else
             {
-                if (writeRecord(*outPtr, id, seq, Fasta()) != 0)
+                if (options.outFastq)
                 {
-                    std::cerr << "ERROR: Writing record!\n";
-                    return 1;
+                    if (writeRecord(*outPtr, id, infix(seq, infixBegin, infixEnd),
+                                    infix(quals, infixBegin, infixEnd), seqan::Fastq()) != 0)
+                    {
+                        std::cerr << "ERROR: Writing record!\n";
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (writeRecord(*outPtr, id, infix(seq, infixBegin, infixEnd), seqan::Fasta()) != 0)
+                    {
+                        std::cerr << "ERROR: Writing record!\n";
+                        return 1;
+                    }
                 }
             }
         }
@@ -420,13 +485,7 @@ int main(int argc, char const ** argv)
         // Advance counter idx.
         idx += 1;
     }
-    // b is true if any format was detected successfully.
-if (tagSelector.tagId == 1)
-    std::cerr << "Detected FASTA." << std::endl;
-else if (tagSelector.tagId == 2)
-    std::cerr << "Detected FASTQ." << std::endl;
-else
-    std::cerr << "Unknown file format!" << std::endl;
+
     if (options.verbosity >= 2)
         std::cerr << "Took " << (sysTime() - startTime) << " s\n";
 

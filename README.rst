@@ -18,3 +18,11 @@ fx_faidx
 Indexing of FASTA file and fast indexed access to FASTA files.
 
 This is the equivalent to ``samtools faidx``.
+
+fx_sak
+------
+
+Slicing and dicing of FASTA and FASTQ files: Extract certain sequences
+by index or name prefix and infixes thereof).  Also allows the
+conversion from FASTQ to FASTA, padding of FASTA to FASTQ with dummy
+qualities.
