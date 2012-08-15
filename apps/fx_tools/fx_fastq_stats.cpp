@@ -238,6 +238,7 @@ parseCommandLine(AppOptions & options, int argc, char const ** argv)
     seqan::ArgumentParser parser("fx_fastq_stats");
     // Set short description, version, and date.
     setShortDescription(parser, "Compute FASTQ statistics.");
+    setCategory(parser, "NGS Quality Control");
     setVersion(parser, "0.1");
     setDate(parser, "August 2012");
 
