@@ -10,3 +10,5 @@ seqan_add_executable(fx_read_fastq fx_read_fastq.cpp)
 seqan_add_executable(fx_write_fasta fx_write_fasta.cpp)
 seqan_add_executable(fx_write_fastq fx_write_fastq.cpp)
 seqan_add_executable(fx_fastq_stats fx_fastq_stats.cpp)
+
+seqan_add_executable(fx_sam_coverage fx_sam_coverage.cpp)
