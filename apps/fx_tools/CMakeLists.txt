@@ -6,5 +6,6 @@ seqan_add_executable(fx_faidx fx_faidx.cpp)
 seqan_add_executable(fx_sak fx_sak.cpp)
 seqan_add_executable(fx_renamer fx_renamer.cpp)
 seqan_add_executable(fx_trimmer fx_trimmer.cpp)
+seqan_add_executable(fx_fastq_stats fx_fastq_stats.cpp)
 
 seqan_add_executable(fx_sam_coverage fx_sam_coverage.cpp)
