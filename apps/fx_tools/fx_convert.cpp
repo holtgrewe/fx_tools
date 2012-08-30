@@ -125,7 +125,9 @@ parseArgs(FxConvertOptions & options,
     addSection(parser, "I/O Related");
     addOption(parser, seqan::ArgParseOption("z", "gzip", "Compress output with GZIP."));
     addOption(parser, seqan::ArgParseOption("i", "in-file", "Input file name.", seqan::ArgParseArgument::STRING));
+    setValidValues(parser, "in-file", "fastq fq fasta fa");
     addOption(parser, seqan::ArgParseOption("o", "out-file", "Output file name.", seqan::ArgParseArgument::STRING));
+    setValidValues(parser, "out-file", "fastq fq fasta fa");
 
     addSection(parser, "Quality Related");
     addOption(parser, seqan::ArgParseOption("g", "guess-format", "Guess format and quality scale and exit."));
