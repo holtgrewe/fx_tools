@@ -52,6 +52,7 @@
 #include <seqan/sequence.h>
 #include <seqan/stream.h>
 #include <seqan/arg_parse.h>
+#include <seqan/seq_io.h>
 
 // ===========================================================================
 // Argument Parsing
