@@ -263,8 +263,9 @@ int main(int argc, char const ** argv)
         if (endPos < beginPos)
             beginPos = endPos;
 
-        // Cut out infix.
+        // Cut out infix of sequence and qualities.
         seq = infix(seq, beginPos, endPos);
+        seq = infix(qual, beginPos, endPos);
 
         if (writeRecord(outStream, id, seq, qual) != 0)
         {
