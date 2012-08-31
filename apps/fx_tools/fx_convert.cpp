@@ -124,9 +124,9 @@ parseArgs(FxConvertOptions & options,
 
     addSection(parser, "I/O Related");
     addOption(parser, seqan::ArgParseOption("z", "gzip", "Compress output with GZIP."));
-    addOption(parser, seqan::ArgParseOption("i", "in-file", "Input file name.", seqan::ArgParseArgument::STRING));
+    addOption(parser, seqan::ArgParseOption("i", "in-file", "Input file name.", seqan::ArgParseArgument::INPUTFILE));
     setValidValues(parser, "in-file", "fastq fq fasta fa");
-    addOption(parser, seqan::ArgParseOption("o", "out-file", "Output file name.", seqan::ArgParseArgument::STRING));
+    addOption(parser, seqan::ArgParseOption("o", "out-file", "Output file name.", seqan::ArgParseArgument::OUTPUTFILE));
     setValidValues(parser, "out-file", "fastq fq fasta fa");
 
     addSection(parser, "Quality Related");
@@ -173,7 +173,7 @@ parseArgs(FxConvertOptions & options,
         if (isSet(parser, "very-verbose"))
             options.verbosity = 2;
         options.guessFormat = isSet(parser, "guess-format");
-        options.gzip = isSet(parser, "in-file");
+        options.gzip = isSet(parser, "gzip");
 
         if (isSet(parser, "source-format"))
         {
@@ -207,10 +207,8 @@ parseArgs(FxConvertOptions & options,
                 SEQAN_FAIL("Invalid valid for --target-format: %s!", toCString(tmp));
         }
         
-        if (isSet(parser, "in-file"))
-            getOptionValue(options.inPath, parser, "in-file");
-        if (isSet(parser, "out-file"))
-            getOptionValue(options.outPath, parser, "out-file");
+        getOptionValue(options.inPath, parser, "in-file");
+        getOptionValue(options.outPath, parser, "out-file");
     }
 
     return res;
@@ -682,7 +680,7 @@ int main(int argc, char const ** argv)
                     return 1;
                 }
                 seqan::Stream<seqan::GZFile> gzStream(gzOut);
-                int res = runConvert(gzStream, std::cerr, std::cin, options);
+                int res = runConvert(gzStream, std::cerr, in, options);
                 gzclose(gzOut);
                 return res;
             }
@@ -694,7 +692,7 @@ int main(int argc, char const ** argv)
                     std::cerr << "ERROR: Could not open " << options.outPath << '\n';
                     return 1;
                 }
-                return runConvert(out, std::cerr, std::cin, options);
+                return runConvert(out, std::cerr, in, options);
             }
         }
     }
